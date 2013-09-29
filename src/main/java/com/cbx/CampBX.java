@@ -19,30 +19,32 @@ import java.net.URI;
 public class CampBX {
     private String username;
     private String password;
+    private HttpClient httpClient;
+    private URIBuilder baseURI;
 
     public CampBX(String username, String password) {
         this.username = username;
         this.password = password;
+        baseURI = new URIBuilder()
+                .setScheme("http")
+                .setHost("CampBX.com")
+                .setPath("/api/");
+        this.httpClient = new DefaultHttpClient();
     }
 
     public Ticker ticker() {
         try {
-            URI uri = new URIBuilder()
-                .setScheme("http")
-                .setHost("CampBX.com")
-                .setPath("/api/xticker.php")
-                .build();
-
-            HttpClient httpclient = new DefaultHttpClient();
+            URI uri = baseURI.setPath(baseURI.getPath()+"xticker.php").build();
             HttpGet httpget = new HttpGet(uri);
-            HttpResponse response = httpclient.execute(httpget);
+            HttpResponse response = httpClient.execute(httpget);
             try {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
                     // Stream content out
                     OutputStream stream = new java.io.ByteArrayOutputStream();
                     entity.writeTo(stream);
-                    System.out.println("stream.toString():"+stream.toString());
+                    System.out.println(stream.toString());
+                    return new Ticker(stream.toString());
                 }
             } finally {
                 //response.close();

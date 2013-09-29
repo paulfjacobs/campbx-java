@@ -1,5 +1,6 @@
 package com.cbx;
 
+import com.cbx.response.Depth;
 import com.cbx.response.Ticker;
 
 import org.apache.http.HttpEntity;
@@ -20,40 +21,38 @@ public class CampBX {
     private String username;
     private String password;
     private HttpClient httpClient;
-    private URIBuilder baseURI;
+    private URI baseURI;
 
-    public CampBX(String username, String password) {
+    public CampBX(String username, String password) throws Exception{
         this.username = username;
         this.password = password;
         baseURI = new URIBuilder()
                 .setScheme("http")
                 .setHost("CampBX.com")
-                .setPath("/api/");
+                .setPath("/api/").build();
         this.httpClient = new DefaultHttpClient();
     }
 
-    public Ticker ticker() {
-        try {
-            URI uri = baseURI.setPath(baseURI.getPath()+"xticker.php").build();
-            HttpGet httpget = new HttpGet(uri);
-            HttpResponse response = httpClient.execute(httpget);
-            try {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    // Stream content out
-                    OutputStream stream = new java.io.ByteArrayOutputStream();
-                    entity.writeTo(stream);
-                    System.out.println(stream.toString());
-                    return new Ticker(stream.toString());
-                }
-            } finally {
-                //response.close();
-            }
-        } catch(Exception e) {
+    public Depth depth() throws Exception {
+        return new Depth(getPage("xdepth.php"));
+    }
 
+
+    public Ticker ticker() throws  Exception {
+        return new Ticker(getPage("xticker.php"));
+    }
+
+    private String getPage(String appendPath) throws Exception {
+        URIBuilder uri = new URIBuilder(baseURI).setPath(baseURI.getPath() + appendPath);
+        HttpGet httpget = new HttpGet(uri.build());
+        HttpResponse response = httpClient.execute(httpget);
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            OutputStream stream = new java.io.ByteArrayOutputStream();
+            entity.writeTo(stream);
+            return stream.toString();
         }
-
-        return null;
+        throw new Exception("Failed to get the page "+appendPath);
     }
 
 }
